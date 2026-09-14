@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мастерская — все мои проекты</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-wall: #241b16;
+    --board: #33261c;
+    --board-edge: #1a130f;
+    --paper: #f6ecd9;
+    --paper-2: #efe3cd;
+    --ink: #241b16;
+    --muted-ink: #6b5c4d;
+    --twine: #cbb994;
+    --pin-sage: #7c9473;
+    --pin-rust: #b5533c;
+    --pin-blue: #5b7f95;
+    --pin-mustard: #c99a3b;
+    --pin-plum: #8a5a72;
+    --focus: #e8c86a;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{
+    background: var(--bg-wall);
+  }
+
+  body{
+    margin:0;
+    min-height:100%;
+    background: var(--bg-wall);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    padding: 40px 24px 80px;
+    position: relative;
+  }
+
+  body::before{
+    content:"";
+    position: fixed;
+    inset:0;
+    pointer-events:none;
+    opacity: .5;
+    mix-blend-mode: overlay;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.03), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03), transparent 40%);
+  }
+
+  .board{
+    max-width: 1180px;
+    margin: 0 auto;
+    background: var(--board);
+    border-radius: 6px;
+    border: 10px solid var(--board-edge);
+    box-shadow:
+      0 30px 60px rgba(0,0,0,.5),
+      inset 0 0 80px rgba(0,0,0,.35);
+    padding: 48px clamp(20px, 4vw, 56px) 64px;
+    position: relative;
+    overflow: hidden;
+    zoom: 1.5;
+  }
+
+  .board::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(rgba(0,0,0,.15) 1px, transparent 1.5px),
+      radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.5px);
+    background-size: 9px 9px, 13px 13px;
+    background-position: 0 0, 4px 6px;
+    opacity:.5;
+    pointer-events:none;
+  }
+
+  header.top{
+    position: relative;
+    margin-bottom: 40px;
+  }
+
+  h1{
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    color: var(--paper);
+    margin: 0 0 4px;
+    line-height: 1;
+    transform: rotate(-1.5deg);
+    text-shadow: 0 2px 0 rgba(0,0,0,.2);
+  }
+
+  header.top p{
+    color: #cbb99c;
+    margin: 0;
+    font-size: .95rem;
+    max-width: 46ch;
+  }
+
+  .controls{
+    position: relative;
+    display:flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-top: 26px;
+  }
+
+  .search-note{
+    background: var(--paper);
+    padding: 9px 16px;
+    border-radius: 3px;
+    box-shadow: 0 8px 16px rgba(0,0,0,.35);
+    transform: rotate(-0.6deg);
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    min-width: 220px;
+  }
+
+  .search-note svg{ flex:none; opacity:.55; }
+
+  .search-note input{
+    border:none;
+    background:none;
+    outline:none;
+    font-family:'Inter', sans-serif;
+    font-size: .92rem;
+    color: var(--ink);
+    width: 100%;
+  }
+
+  .search-note input::placeholder{ color:#9a8b76; }
+
+  .chips{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip{
+    border:none;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+    font-size: .82rem;
+    font-weight: 500;
+    padding: 7px 13px 7px 11px;
+    border-radius: 999px;
+    background: rgba(246,236,217,.08);
+    color: var(--paper);
+    display:flex;
+    align-items:center;
+    gap:7px;
+    transition: background .15s ease, transform .15s ease;
+  }
+
+  .chip .dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--chip-color, var(--paper));
+  }
+
+  .chip:hover{ background: rgba(246,236,217,.16); }
+
+  .chip.active{
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .chip:focus-visible, .search-note:focus-within, .note .card-btn:focus-visible{
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .grid{
+    position:relative;
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 34px 26px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .note{
+    position:relative;
+    list-style:none;
+  }
+
+  .note .card-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    text-decoration:none;
+    color:inherit;
+    background: var(--paper);
+    padding: 26px 20px 20px;
+    border: none;
+    border-radius: 2px;
+    box-shadow: 0 10px 20px rgba(0,0,0,.35);
+    transform: rotate(var(--rot, 0deg));
+    transition: transform .18s ease, box-shadow .18s ease;
+    min-height: 168px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .note .card-btn:hover, .note .card-btn:focus-visible{
+    transform: rotate(0deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 22px 34px rgba(0,0,0,.45);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .note .card-btn, .modal-panel{ transition:none; }
+  }
+
+  .pin{
+    position:absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px; height: 20px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fff8, transparent 45%), var(--pin-color, var(--pin-rust));
+    box-shadow: 0 3px 4px rgba(0,0,0,.5);
+    z-index:2;
+  }
+
+  .badge-new{
+    position:absolute;
+    top: -6px;
+    right: -8px;
+    background: var(--pin-rust);
+    color: #fff8ee;
+    font-family:'Inter', sans-serif;
+    font-weight: 600;
+    font-size: .68rem;
+    letter-spacing: .02em;
+    padding: 4px 9px;
+    border-radius: 3px;
+    transform: rotate(6deg);
+    box-shadow: 0 3px 6px rgba(0,0,0,.35);
+    z-index: 3;
+    pointer-events:none;
+  }
+
+  .note .thumb{
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 2px;
+    border: 5px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    display:block;
+    margin-bottom: 12px;
+  }
+
+  .note .emoji{
+    font-size: 1.7rem;
+    display:block;
+    margin-bottom: 10px;
+  }
+
+  .note h2{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size: 1.55rem;
+    margin: 0 0 6px;
+    line-height:1.1;
+  }
+
+  .note p{
+    font-size: .84rem;
+    color: var(--muted-ink);
+    line-height:1.45;
+    margin: 0 0 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .note .tag-open{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size: .78rem;
+    font-weight:600;
+  }
+
+  .note .tag{
+    color: var(--muted-ink);
+    font-size:.72rem;
+  }
+
+  .note .open{
+    color: var(--ink);
+    position:relative;
+  }
+
+  .note .open::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:-3px;
+    height:1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .18s ease;
+  }
+
+  .note .card-btn:hover .open::after, .note .card-btn:focus-visible .open::after{
+    transform: scaleX(1);
+  }
+
+  .empty{
+    color:#cbb99c;
+    font-family:'Caveat', cursive;
+    font-size:1.4rem;
+    text-align:center;
+    padding: 30px 0;
+    display:none;
+  }
+
+  /* ── modal (enlarged note) ── */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 10, 7, 0);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding: 30px;
+    z-index: 50;
+    transition: background .22s ease;
+  }
+
+  .overlay.show{
+    display:flex;
+    background: rgba(15, 10, 7, .72);
+  }
+
+  .modal-panel{
+    background: var(--paper);
+    border-radius: 4px;
+    max-width: 728px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 40px 38px 32px;
+    box-shadow: 0 40px 70px rgba(0,0,0,.55);
+    position: relative;
+    transform: scale(.82) rotate(-1deg);
+    opacity: 0;
+    transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
+  }
+
+  .overlay.show .modal-panel{
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  .modal-close{
+    position:absolute;
+    top: 14px; right: 14px;
+    width: 30px; height:30px;
+    border-radius:50%;
+    border:none;
+    background: rgba(36,27,22,.08);
+    color: var(--ink);
+    font-size: 1.1rem;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  .modal-close:hover{ background: rgba(36,27,22,.16); }
+
+  .modal-images{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .modal-images img{
+    flex: 1 1 220px;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 3px;
+    border: 6px solid #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,.3);
+  }
+
+  .modal-emoji{
+    font-size: 3.4rem;
+    margin-bottom: 8px;
+  }
+
+  .modal-panel h2{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size: 2.5rem;
+    margin: 0 0 10px;
+  }
+
+  .modal-panel .tag{
+    display:inline-block;
+    font-size:.8rem;
+    font-weight:600;
+    color: var(--muted-ink);
+    background: rgba(36,27,22,.06);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+
+  .modal-panel p.desc{
+    font-size: 1.05rem;
+    line-height:1.55;
+    color:#3c2f24;
+    margin: 0 0 22px;
+  }
+
+  .modal-actions{
+    display:flex;
+    justify-content:flex-end;
+  }
+
+  .visit-btn{
+    display:inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration:none;
+    font-weight:600;
+    font-size:.9rem;
+    padding: 10px 20px;
+    border-radius: 4px;
+    transition: transform .15s ease;
+  }
+
+  .visit-btn:hover{ transform: translateY(-2px); }
+
+  .no-link{
+    font-family:'Caveat', cursive;
+    font-size: 1.2rem;
+    color: var(--muted-ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <header class="top">
+    <h1>Мастерская</h1>
+    <p>Всё, что я делаю, в одном месте — тыкай в карточку, чтобы открыть проект.</p>
+
+    <div class="controls">
+      <label class="search-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="text" placeholder="Найти проект…">
+      </label>
+      <div class="chips" id="chips"></div>
+    </div>
+  </header>
+
+  <ul class="grid" id="grid"></ul>
+  <p class="empty" id="empty">Тут пусто. Попробуй другой запрос.</p>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal-panel" id="modalPanel">
+    <button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────────────
+  // КАК ДОБАВИТЬ НОВЫЙ ПРОЕКТ ВРУЧНУЮ:
+  //
+  // Вариант 1 (рекомендуется, если сайт лежит на GitHub Pages):
+  //   Создай в этом же репозитории файл links.json со списком проектов
+  //   в формате ниже. Страница сама подхватит его при загрузке.
+  //
+  // Вариант 2 (быстро, без отдельного файла):
+  //   Допиши объект в массив FALLBACK_PROJECTS ниже.
+  //
+  // Формат одного проекта:
+  // {
+  //   "title": "Название проекта",
+  //   "url": "https://example.com",   // можно не указывать / оставить ""
+  //   "description": "Пара слов о том, что это",
+  //   "tag": "сайты",                  // категория — по ней работают фильтры
+  //   "emoji": "🌐",                    // показывается, если нет картинок
+  //   "pin": "sage",                    // sage | rust | blue | mustard | plum
+  //   "images": ["https://...jpg"]      // 0, 1 или 2 картинки
+  //   "date": "2026-09-14"               // необязательно: если добавлено
+  //                                       // недавно — карточка получит
+  //                                       // метку «новое» и встанет в начало
+  // }
+  //
+  // ─────────────────────────────────────────────────────────────
+  // АВТОПОДТЯГИВАНИЕ ПРОЕКТОВ С GITHUB (опционально):
+  //
+  // 1. Впиши свой ник в GITHUB_USERNAME ниже.
+  // 2. В настройках каждого репозитория, который должен попасть на доску,
+  //    добавь topic (метку) со значением из GITHUB_TOPIC (по умолчанию "hub").
+  // 3. Заполни поле "Description" у репозитория на GitHub (значок ⚙️ рядом
+  //    с блоком About на странице репозитория) — оно станет описанием
+  //    карточки автоматически. Текст из README сюда не попадает.
+  // 4. Если хочешь картинку — положи в корень репозитория файл cover.png
+  //    (или cover.jpg / preview.png / preview.jpg) — хаб найдёт его сам.
+  //    Нет файла — покажется просто эмодзи.
+  // 5. Если хочешь, чтобы карточка вела на сам сайт, а не на страницу
+  //    репозитория — заполни там же поле "Website".
+  //
+  // Свежесозданные репозитории (за последние NEW_DAYS дней) автоматически
+  // получают метку «новое» и поднимаются в начало доски.
+  //
+  // Если GITHUB_USERNAME оставить пустым — этот шаг просто пропускается.
+  // ─────────────────────────────────────────────────────────────
+
+  const GITHUB_USERNAME = "PatRlza";
+  const GITHUB_TOPIC = "hub";      // topic, которым помечаешь нужные репо
+  const COVER_FILENAMES = ["cover.png", "cover.jpg", "preview.png", "preview.jpg"];
+  const NEW_DAYS = 14;             // сколько дней карточка считается «новой»
+  const DESCRIPTION_LIMIT = 90;    // сколько символов описания показывать на карточке
+
+  const FALLBACK_PROJECTS = [
+    { title: "О мастерской", url: "", description: "Занимаемся разными приколами, в том числе распространением тюленьчиков.", tag: "прочее", emoji: "🦭", pin: "blue", images: ["./seal.gif"] },
+  ];
+
+  const PIN_VARS = { sage:"var(--pin-sage)", rust:"var(--pin-rust)", blue:"var(--pin-blue)", mustard:"var(--pin-mustard)", plum:"var(--pin-plum)" };
+  const ROT_SEQUENCE = [-3, 2, -1.5, 3, -2, 1, -2.5, 1.5];
+
+  let PROJECTS = FALLBACK_PROJECTS;
+  let activeTags = new Set();
+  let query = "";
+  let lastCard = null;
+
+  const grid = document.getElementById('grid');
+  const chipsEl = document.getElementById('chips');
+  const emptyEl = document.getElementById('empty');
+  const searchEl = document.getElementById('search');
+  const overlay = document.getElementById('overlay');
+  const modalPanel = document.getElementById('modalPanel');
+  const modalContent = document.getElementById('modalContent');
+  const modalClose = document.getElementById('modalClose');
+
+  function buildChips(){
+    const tags = [...new Set(PROJECTS.map(p => p.tag).filter(Boolean))];
+    chipsEl.innerHTML = "";
+    tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.type = 'button';
+      btn.innerHTML = '<span class="dot"></span>' + tag;
+      btn.addEventListener('click', () => selectTag(tag, btn));
+      chipsEl.appendChild(btn);
+    });
+  }
+
+  function selectTag(tag, btn){
+    const wasActive = activeTags.has(tag);
+    activeTags.clear();
+    [...chipsEl.children].forEach(c => c.classList.remove('active'));
+    if (!wasActive){
+      activeTags.add(tag);
+      btn.classList.add('active');
+    }
+    render();
+  }
+
+  function matches(p){
+    const q = query.trim().toLowerCase();
+    const okQuery = !q || p.title.toLowerCase().includes(q) || (p.description||"").toLowerCase().includes(q);
+    const okTag = activeTags.size === 0 || activeTags.has(p.tag);
+    return okQuery && okTag;
+  }
+
+  function hasRealUrl(p){
+    return !!(p.url && p.url.trim() && p.url.trim() !== '#');
+  }
+
+  function isRecent(dateStr){
+    if (!dateStr) return false;
+    const t = new Date(dateStr).getTime();
+    if (isNaN(t)) return false;
+    return (Date.now() - t) < NEW_DAYS * 24 * 60 * 60 * 1000;
+  }
+
+  function truncate(text, max){
+    if (!text) return '';
+    return text.length > max ? text.slice(0, max).trimEnd() + '…' : text;
+  }
+
+  function render(){
+    const list = PROJECTS.filter(matches);
+    grid.innerHTML = "";
+
+    list.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.className = 'note';
+      li.style.setProperty('--rot', ROT_SEQUENCE[i % ROT_SEQUENCE.length] + 'deg');
+      li.style.setProperty('--pin-color', PIN_VARS[p.pin] || 'var(--pin-rust)');
+
+      const thumb = (p.images && p.images[0])
+        ? '<img class="thumb" src="' + p.images[0] + '" alt="">'
+        : '<span class="emoji">' + (p.emoji || '📌') + '</span>';
+
+      const badge = isRecent(p.date) ? '<span class="badge-new">новое</span>' : '';
+
+      li.innerHTML =
+        '<div class="pin"></div>' +
+        badge +
+        '<button type="button" class="card-btn">' +
+          thumb +
+          '<h2>' + p.title + '</h2>' +
+          '<p>' + truncate(p.description || '', DESCRIPTION_LIMIT) + '</p>' +
+          '<div class="tag-open">' +
+            '<span class="tag">' + (p.tag || '') + '</span>' +
+            '<span class="open">Открыть</span>' +
+          '</div>' +
+        '</button>';
+
+      const btn = li.querySelector('.card-btn');
+      btn.addEventListener('click', () => openModal(p, btn));
+      grid.appendChild(li);
+    });
+
+    emptyEl.style.display = list.length === 0 ? 'block' : 'none';
+  }
+
+  function flipFrom(cardEl){
+    modalPanel.style.transition = 'none';
+    modalPanel.style.transform = 'none';
+    modalPanel.style.opacity = '1';
+    void modalPanel.offsetWidth; // reflow
+    const finalRect = modalPanel.getBoundingClientRect();
+    const startRect = cardEl.getBoundingClientRect();
+    const scaleX = startRect.width / finalRect.width;
+    const scaleY = startRect.height / finalRect.height;
+    const translateX = (startRect.left + startRect.width / 2) - (finalRect.left + finalRect.width / 2);
+    const translateY = (startRect.top + startRect.height / 2) - (finalRect.top + finalRect.height / 2);
+    return { scaleX, scaleY, translateX, translateY };
+  }
+
+  function openModal(p, cardEl){
+    const imgs = (p.images || []).slice(0, 2);
+    const imagesHtml = imgs.length
+      ? '<div class="modal-images">' + imgs.map(src => '<img src="' + src + '" alt="">').join('') + '</div>'
+      : '<div class="modal-emoji">' + (p.emoji || '📌') + '</div>';
+
+    const actionHtml = hasRealUrl(p)
+      ? '<a class="visit-btn" href="' + p.url + '" target="_blank" rel="noopener noreferrer">Посетить</a>'
+      : '<span class="no-link">Ссылка появится, когда проект будет готов 🙈</span>';
+
+    modalContent.innerHTML =
+      imagesHtml +
+      '<h2>' + p.title + '</h2>' +
+      (p.tag ? '<span class="tag">' + p.tag + '</span>' : '') +
+      '<p class="desc">' + (p.description || '') + '</p>' +
+      '<div class="modal-actions">' + actionHtml + '</div>';
+
+    overlay.classList.remove('closing');
+    overlay.classList.add('show');
+
+    const { scaleX, scaleY, translateX, translateY } = flipFrom(cardEl);
+    modalPanel.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scaleX + ',' + scaleY + ')';
+    modalPanel.style.opacity = '0.5';
+
+    requestAnimationFrame(() => {
+      modalPanel.style.transition = 'transform .34s cubic-bezier(.2,.8,.2,1), opacity .2s ease';
+      modalPanel.style.transform = 'translate(0px, 0px) scale(1,1)';
+      modalPanel.style.opacity = '1';
+    });
+
+    lastCard = cardEl;
+  }
+
+  function closeModal(){
+    if (!overlay.classList.contains('show')) return;
+
+    if (lastCard){
+      const cardRect = lastCard.getBoundingClientRect();
+      const panelRect = modalPanel.getBoundingClientRect();
+      const scaleX = cardRect.width / panelRect.width;
+      const scaleY = cardRect.height / panelRect.height;
+      const translateX = (cardRect.left + cardRect.width / 2) - (panelRect.left + panelRect.width / 2);
+      const translateY = (cardRect.top + cardRect.height / 2) - (panelRect.top + panelRect.height / 2);
+
+      overlay.classList.add('closing');
+      modalPanel.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1), opacity .22s ease';
+      modalPanel.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scaleX + ',' + scaleY + ')';
+      modalPanel.style.opacity = '0';
+    } else {
+      overlay.classList.add('closing');
+    }
+
+    setTimeout(() => {
+      overlay.classList.remove('show', 'closing');
+      modalPanel.style.transition = 'none';
+      modalPanel.style.transform = '';
+      modalPanel.style.opacity = '';
+      lastCard = null;
+    }, 300);
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  searchEl.addEventListener('input', e => { query = e.target.value; render(); });
+
+  async function findCover(user, repo, branch){
+    for (const name of COVER_FILENAMES){
+      const url = 'https://raw.githubusercontent.com/' + user + '/' + repo + '/' + branch + '/' + name;
+      try{
+        const res = await fetch(url, { method: 'HEAD' });
+        if (res.ok) return url;
+      }catch(e){ /* файла нет или сеть недоступна — пробуем следующее имя */ }
+    }
+    return null;
+  }
+
+  async function loadFromGithub(){
+    if (!GITHUB_USERNAME) return [];
+    try{
+      const res = await fetch('https://api.github.com/users/' + GITHUB_USERNAME + '/repos?per_page=100', { cache: 'no-store' });
+      if (!res.ok) return [];
+      const repos = await res.json();
+      const tagged = repos.filter(r => Array.isArray(r.topics) && r.topics.includes(GITHUB_TOPIC));
+      const covers = await Promise.all(tagged.map(r => findCover(GITHUB_USERNAME, r.name, r.default_branch || 'main')));
+
+      return tagged.map((r, i) => ({
+        title: r.name,
+        url: r.homepage || r.html_url,
+        description: r.description || '',
+        tag: 'github',
+        emoji: '💻',
+        pin: 'blue',
+        images: covers[i] ? [covers[i]] : [],
+        date: r.created_at
+      }));
+    }catch(e){
+      // GitHub недоступен (нет сети / лимит запросов) — просто пропускаем этот источник
+      return [];
+    }
+  }
+
+  async function loadProjects(){
+    let manual = FALLBACK_PROJECTS;
+    try{
+      const res = await fetch('./links.json', { cache: 'no-store' });
+      if (res.ok){
+        const data = await res.json();
+        if (Array.isArray(data) && data.length) manual = data;
+      }
+    }catch(e){
+      // links.json ещё не существует или сайт открыт локально — используем демо-данные
+    }
+
+    const fromGithub = await loadFromGithub();
+    PROJECTS = fromGithub.length ? [...manual, ...fromGithub] : manual;
+
+    PROJECTS = PROJECTS
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => {
+        const aNew = isRecent(a.p.date) ? 1 : 0;
+        const bNew = isRecent(b.p.date) ? 1 : 0;
+        if (aNew !== bNew) return bNew - aNew;
+        return a.i - b.i;
+      })
+      .map(x => x.p);
+
+    buildChips();
+    render();
+  }
+
+  loadProjects();
+</script>
+
+</body>
+</html>
